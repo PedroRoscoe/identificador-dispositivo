@@ -14,6 +14,7 @@
 // ============================================================================
 
 using DeviceInfoAPI.Services;  // Import our custom services
+using DeviceInfoAPI.Controllers;  // Import our controllers
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +38,7 @@ builder.Services.AddSingleton<IEncryptionService, EncryptionService>();         
 builder.Services.AddSingleton<IEnhancedIpStorageService, EnhancedIpStorageService>(); // Enhanced IP storage with caching
 builder.Services.AddSingleton<IIpApiService, IpApiService>();                     // IP geolocation API service
 builder.Services.AddSingleton<IDeviceInfoService, DeviceInfoService>();           // Main device info service
+builder.Services.AddSingleton<IRiskAnalysisService, RiskAnalysisService>();      // Risk analysis service
 
 // ============================================================================
 // CORS (CROSS-ORIGIN RESOURCE SHARING) CONFIGURATION
@@ -77,6 +79,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();  // Enable endpoint discovery for Swagger
 builder.Services.AddSwaggerGen();            // Generate Swagger documentation
 
+// Add controllers for the risk analysis API
+builder.Services.AddControllers();
+
 var app = builder.Build();
 
 // ============================================================================
@@ -109,6 +114,10 @@ if (app.Environment.IsDevelopment())
     // to ensure CORS headers are properly set.
     // ============================================================================
 app.UseCors("AllowLocal");
+
+// Add routing and controllers
+app.UseRouting();
+app.MapControllers();
 
 // ============================================================================
 // API ENDPOINTS DEFINITION
