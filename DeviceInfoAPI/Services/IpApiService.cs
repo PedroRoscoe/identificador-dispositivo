@@ -15,6 +15,8 @@
 
 using System.Text.Json;  // JSON serialization/deserialization
 
+namespace DeviceInfoAPI.Services;
+
 /// <summary>
 /// Service for querying IP geolocation and ISP information from IP-API.
 /// 

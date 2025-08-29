@@ -50,16 +50,23 @@ public class DeviceInfoService : IDeviceInfoService
     private readonly HttpClient _httpClient;
     
     /// <summary>
-    /// Service for persisting and retrieving external IP addresses.
-    /// This allows us to remember the "real" internet IP even when connected to VPN.
+    /// Service for persisting and retrieving external IP addresses with enhanced features.
+    /// This allows us to remember the "real" internet IP even when connected to VPN,
+    /// and cache location data to avoid unnecessary API calls.
     /// </summary>
-    private readonly IIpStorageService _ipStorageService;
+    private readonly IEnhancedIpStorageService _enhancedIpStorageService;
     
     /// <summary>
     /// Service for querying IP-API to get geolocation and ISP information.
     /// Provides country, city, coordinates, timezone, and ISP details.
     /// </summary>
     private readonly IIpApiService _ipApiService;
+
+    /// <summary>
+    /// Service for encrypting and decrypting sensitive data.
+    /// Used to secure stored IP and location information.
+    /// </summary>
+    private readonly IEncryptionService _encryptionService;
 
     /// <summary>
     /// Constructor for DeviceInfoService.
@@ -70,11 +77,12 @@ public class DeviceInfoService : IDeviceInfoService
     /// 
     /// For Java developers: This is equivalent to:
     /// @Autowired
-    /// public DeviceInfoService(IIpStorageService ipStorageService, IIpApiService ipApiService)
+    /// public DeviceInfoService(IEnhancedIpStorageService enhancedIpStorageService, IIpApiService ipApiService)
     /// </summary>
-    /// <param name="ipStorageService">Service for managing external IP storage</param>
+    /// <param name="enhancedIpStorageService">Service for managing enhanced external IP storage</param>
     /// <param name="ipApiService">Service for IP geolocation queries</param>
-    public DeviceInfoService(IIpStorageService ipStorageService, IIpApiService ipApiService)
+    /// <param name="encryptionService">Service for encrypting and decrypting sensitive data</param>
+    public DeviceInfoService(IEnhancedIpStorageService enhancedIpStorageService, IIpApiService ipApiService, IEncryptionService encryptionService)
     {
         // ============================================================================
         // HTTP CLIENT INITIALIZATION
@@ -96,8 +104,9 @@ public class DeviceInfoService : IDeviceInfoService
         // These services were injected by the DI container and are now stored
         // as private readonly fields for use throughout this class.
         // ============================================================================
-        _ipStorageService = ipStorageService;  // Service for storing/retrieving external IPs
-        _ipApiService = ipApiService;          // Service for IP geolocation queries
+        _enhancedIpStorageService = enhancedIpStorageService;  // Service for enhanced IP storage with caching
+        _ipApiService = ipApiService;                          // Service for IP geolocation queries
+        _encryptionService = encryptionService;                // Service for encrypting and decrypting data
     }
 
     /// <summary>
@@ -647,14 +656,15 @@ public class DeviceInfoService : IDeviceInfoService
                 // ============================================================================
                 // RETRIEVE STORED EXTERNAL IP
                 // ============================================================================
-                // Get the last known external IP address from persistent storage.
+                // Get the last known external IP address from enhanced persistent storage.
                 // This IP was stored when we were NOT connected to a VPN.
                 // 
                 // Note: We use .Result here because this method is synchronous.
                 // In production, consider making this method async for better performance.
                 // ============================================================================
-                var storedIp = _ipStorageService.GetLastKnownExternalIpAsync().Result;
-                var lastUpdate = _ipStorageService.GetLastUpdateTimeAsync().Result;
+                var storedData = _enhancedIpStorageService.GetLastKnownExternalIpDataAsync().Result;
+                var storedIp = storedData?.ExternalIpAddress;
+                var lastUpdate = storedData?.LastUpdated;
                 
                 if (!string.IsNullOrEmpty(storedIp))
                 {
@@ -710,14 +720,14 @@ public class DeviceInfoService : IDeviceInfoService
                     // SUCCESS: STORE AND RETURN CURRENT IP
                     // ============================================================================
                     // We successfully got the current external IP. Now we:
-                    // 1. Store it in persistent storage for future VPN use
+                    // 1. Store it in enhanced persistent storage for future VPN use
                     // 2. Return it with a suffix indicating it's current
                     // 
-                    // Note: We use .Wait() here because SaveExternalIpAsync is async
+                    // Note: We use .Wait() here because SaveExternalIpDataAsync is async
                     // but this method is synchronous. In production, consider making
                     // this method async for better performance.
                     // ============================================================================
-                    _ipStorageService.SaveExternalIpAsync(currentIp).Wait();
+                    _enhancedIpStorageService.SaveExternalIpDataAsync(currentIp, null).Wait();
                     return currentIp + " (Current - Stored for VPN use)";
                 }
                 else
@@ -728,10 +738,11 @@ public class DeviceInfoService : IDeviceInfoService
                     // External IP services failed, but we might have a stored IP
                     // from a previous successful detection. Try to return that instead.
                     // ============================================================================
-                    var storedIp = _ipStorageService.GetLastKnownExternalIpAsync().Result;
+                    var storedData = _enhancedIpStorageService.GetLastKnownExternalIpDataAsync().Result;
+                    var storedIp = storedData?.ExternalIpAddress;
                     if (!string.IsNullOrEmpty(storedIp))
                     {
-                        var lastUpdate = _ipStorageService.GetLastUpdateTimeAsync().Result;
+                        var lastUpdate = storedData?.LastUpdated;
                         var timeAgo = lastUpdate.HasValue ? GetTimeAgo(lastUpdate.Value) : "Unknown";
                         return $"{storedIp} (Stored - Last Updated: {timeAgo})";
                     }
@@ -767,10 +778,11 @@ public class DeviceInfoService : IDeviceInfoService
             // ============================================================================
             try
             {
-                var storedIp = _ipStorageService.GetLastKnownExternalIpAsync().Result;
+                var storedData = _enhancedIpStorageService.GetLastKnownExternalIpDataAsync().Result;
+                var storedIp = storedData?.ExternalIpAddress;
                 if (!string.IsNullOrEmpty(storedIp))
                 {
-                    var lastUpdate = _ipStorageService.GetLastUpdateTimeAsync().Result;
+                    var lastUpdate = storedData?.LastUpdated;
                     var timeAgo = lastUpdate.HasValue ? GetTimeAgo(lastUpdate.Value) : "Unknown";
                     return $"{storedIp} (Stored - Last Updated: {timeAgo})";
                 }
@@ -879,6 +891,63 @@ public class DeviceInfoService : IDeviceInfoService
                 return null;
             }
 
+            // ============================================================================
+            // INTELLIGENT CACHING: CHECK IF WE ALREADY HAVE LOCATION DATA FOR THIS IP
+            // ============================================================================
+            // First, check if we have stored location data for the current IP address.
+            // If the IP hasn't changed, we can return the cached location data instead
+            // of making a new API call to IP-API.
+            // ============================================================================
+            var storedData = await _enhancedIpStorageService.GetLastKnownExternalIpDataAsync();
+            if (storedData != null && storedData.LocationInfo != null)
+            {
+                // Check if the stored IP is the same as the current IP
+                if (await _enhancedIpStorageService.IsStoredIpCurrentAsync(ipAddress))
+                {
+                    Console.WriteLine($"GetIpLocationInfo: Using cached location data for IP: {ipAddress}");
+                    
+                    // Get decrypted location info from the encrypted storage
+                    var decryptedLocationInfo = storedData.GetDecryptedLocationInfo(_encryptionService);
+                    if (decryptedLocationInfo != null)
+                    {
+                        Console.WriteLine($"GetIpLocationInfo: Cached data - Country: {decryptedLocationInfo.Country}, City: {decryptedLocationInfo.City}");
+                        
+                        // Return cached location data with updated timestamp
+                        var cachedResult = new IpLocationInfo
+                        {
+                            Country = decryptedLocationInfo.Country,
+                            CountryCode = decryptedLocationInfo.CountryCode,
+                            Region = decryptedLocationInfo.Region,
+                            RegionName = decryptedLocationInfo.RegionName,
+                            City = decryptedLocationInfo.City,
+                            Zip = decryptedLocationInfo.Zip,
+                            Lat = decryptedLocationInfo.Lat,
+                            Lon = decryptedLocationInfo.Lon,
+                            Timezone = decryptedLocationInfo.Timezone,
+                            Isp = decryptedLocationInfo.Isp,
+                            Organization = decryptedLocationInfo.Organization,
+                            AsNumber = decryptedLocationInfo.AsNumber,
+                            Query = decryptedLocationInfo.Query,
+                            LastUpdated = DateTime.UtcNow
+                        };
+                        
+                        return cachedResult;
+                    }
+                    else
+                    {
+                        Console.WriteLine("GetIpLocationInfo: Failed to decrypt cached location data, will query IP-API");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"GetIpLocationInfo: IP has changed from {storedData.ExternalIpAddress} to {ipAddress}, will query IP-API");
+                }
+            }
+            else
+            {
+                Console.WriteLine("GetIpLocationInfo: No cached location data available, will query IP-API");
+            }
+
             Console.WriteLine($"GetIpLocationInfo: About to query IP-API for IP: {ipAddress}");
             
             // Query IP-API for location information
@@ -912,6 +981,16 @@ public class DeviceInfoService : IDeviceInfoService
             };
 
             Console.WriteLine($"GetIpLocationInfo: Created IpLocationInfo object: Country={result.Country}, City={result.City}");
+            
+            // ============================================================================
+            // CACHE THE NEW LOCATION DATA
+            // ============================================================================
+            // Store the new location data along with the IP address for future use.
+            // This will prevent unnecessary API calls when the same IP is requested again.
+            // ============================================================================
+            await _enhancedIpStorageService.SaveExternalIpDataAsync(ipAddress, result);
+            Console.WriteLine($"GetIpLocationInfo: Cached new location data for IP: {ipAddress}");
+            
             return result;
         }
         catch (Exception ex)

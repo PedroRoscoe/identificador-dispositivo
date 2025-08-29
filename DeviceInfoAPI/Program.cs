@@ -15,6 +15,8 @@
 
 using DeviceInfoAPI.Services;  // Import our custom services
 
+var builder = WebApplication.CreateBuilder(args);
+
 // ============================================================================
 // DEPENDENCY INJECTION CONFIGURATION
 // ============================================================================
@@ -31,9 +33,10 @@ using DeviceInfoAPI.Services;  // Import our custom services
 // ============================================================================
 
 // Add services to the container
-builder.Services.AddSingleton<IIpStorageService, IpStorageService>();      // IP storage service (persistent)
-builder.Services.AddSingleton<IIpApiService, IpApiService>();              // IP geolocation API service
-builder.Services.AddSingleton<IDeviceInfoService, DeviceInfoService>();    // Main device info service
+builder.Services.AddSingleton<IEncryptionService, EncryptionService>();           // Encryption service for data security
+builder.Services.AddSingleton<IEnhancedIpStorageService, EnhancedIpStorageService>(); // Enhanced IP storage with caching
+builder.Services.AddSingleton<IIpApiService, IpApiService>();                     // IP geolocation API service
+builder.Services.AddSingleton<IDeviceInfoService, DeviceInfoService>();           // Main device info service
 
 // ============================================================================
 // CORS (CROSS-ORIGIN RESOURCE SHARING) CONFIGURATION
@@ -352,6 +355,24 @@ app.MapGet("/api/test-ip-api/{ip}", async (string ip, IIpApiService ipApiService
 Console.WriteLine("Starting Device Info API...");
 Console.WriteLine($"Environment: {app.Environment.EnvironmentName}");  // Development, Production, etc.
 Console.WriteLine($"URLs: {string.Join(", ", app.Urls)}");            // Listening URLs (e.g., http://localhost:5000)
+
+// ============================================================================
+// DATA MIGRATION
+// ============================================================================
+// Migrate existing unencrypted data to encrypted format for enhanced security.
+// This ensures backward compatibility while improving data protection.
+// ============================================================================
+try
+{
+    var enhancedStorageService = app.Services.GetRequiredService<IEnhancedIpStorageService>();
+    await enhancedStorageService.MigrateToEncryptedStorageAsync();
+    Console.WriteLine("Data migration completed successfully.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Data migration failed: {ex.Message}");
+    Console.WriteLine("Application will continue with existing data.");
+}
 
 // ============================================================================
 // APPLICATION EXECUTION
