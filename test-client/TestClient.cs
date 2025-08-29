@@ -6,9 +6,32 @@ public class DeviceInfo
 {
     public string DeviceName { get; set; } = string.Empty;
     public string DeviceId { get; set; } = string.Empty;
-    public string IpAddress { get; set; } = string.Empty;
-    public string MacAddress { get; set; } = string.Empty;
+    public string ExternalIpAddress { get; set; } = string.Empty;
+    public List<NetworkInterface> NetworkInterfaces { get; set; } = new();
     public DateTime LastUpdated { get; set; }
+}
+
+public class NetworkInterface
+{
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string MacAddress { get; set; } = string.Empty;
+    public List<NetworkAddress> Addresses { get; set; } = new();
+    public bool IsActive { get; set; }
+}
+
+public class NetworkAddress
+{
+    public string IpAddress { get; set; } = string.Empty;
+    public string AddressFamily { get; set; } = string.Empty;
+    public string SubnetMask { get; set; } = string.Empty;
+    public string Gateway { get; set; } = string.Empty;
+    public string DnsServers { get; set; } = string.Empty;
+    public string IpType { get; set; } = string.Empty;
+    public string IpTypeDescription { get; set; } = string.Empty;
+    public bool IsVpnGateway { get; set; }
 }
 
 public class Program
@@ -80,9 +103,37 @@ public class Program
                 Console.WriteLine("✓ Device Info retrieved successfully:");
                 Console.WriteLine($"  Device Name: {deviceInfo?.DeviceName}");
                 Console.WriteLine($"  Device ID: {deviceInfo?.DeviceId}");
-                Console.WriteLine($"  IP Address: {deviceInfo?.IpAddress}");
-                Console.WriteLine($"  MAC Address: {deviceInfo?.MacAddress}");
+                Console.WriteLine($"  External IP: {deviceInfo?.ExternalIpAddress}");
+                Console.WriteLine($"  Network Interfaces: {deviceInfo?.NetworkInterfaces.Count ?? 0}");
                 Console.WriteLine($"  Last Updated: {deviceInfo?.LastUpdated}");
+                
+                if (deviceInfo?.NetworkInterfaces != null)
+                {
+                    Console.WriteLine("\n  Network Interfaces:");
+                    foreach (var nic in deviceInfo.NetworkInterfaces)
+                    {
+                        Console.WriteLine($"    {nic.Name} ({nic.Type}) - {nic.Status}");
+                        Console.WriteLine($"      MAC: {nic.MacAddress}");
+                        Console.WriteLine($"      Active: {nic.IsActive}");
+                        
+                        if (nic.Addresses.Any())
+                        {
+                            Console.WriteLine("      Addresses:");
+                            foreach (var addr in nic.Addresses)
+                            {
+                                var vpnIndicator = addr.IsVpnGateway ? " [VPN Gateway]" : "";
+                                Console.WriteLine($"        {addr.IpAddress} ({addr.AddressFamily}) - {addr.IpTypeDescription}{vpnIndicator}");
+                                if (!string.IsNullOrEmpty(addr.SubnetMask))
+                                    Console.WriteLine($"          Subnet: {addr.SubnetMask}");
+                                if (!string.IsNullOrEmpty(addr.Gateway))
+                                    Console.WriteLine($"          Gateway: {addr.Gateway}");
+                                if (!string.IsNullOrEmpty(addr.DnsServers))
+                                    Console.WriteLine($"          DNS: {addr.DnsServers}");
+                            }
+                        }
+                        Console.WriteLine();
+                    }
+                }
             }
             else
             {
@@ -110,9 +161,37 @@ public class Program
                 Console.WriteLine("✓ Async Device Info retrieved successfully:");
                 Console.WriteLine($"  Device Name: {deviceInfo?.DeviceName}");
                 Console.WriteLine($"  Device ID: {deviceInfo?.DeviceId}");
-                Console.WriteLine($"  IP Address: {deviceInfo?.IpAddress}");
-                Console.WriteLine($"  MAC Address: {deviceInfo?.MacAddress}");
+                Console.WriteLine($"  External IP: {deviceInfo?.ExternalIpAddress}");
+                Console.WriteLine($"  Network Interfaces: {deviceInfo?.NetworkInterfaces.Count ?? 0}");
                 Console.WriteLine($"  Last Updated: {deviceInfo?.LastUpdated}");
+                
+                if (deviceInfo?.NetworkInterfaces != null)
+                {
+                    Console.WriteLine("\n  Network Interfaces:");
+                    foreach (var nic in deviceInfo.NetworkInterfaces)
+                    {
+                        Console.WriteLine($"    {nic.Name} ({nic.Type}) - {nic.Status}");
+                        Console.WriteLine($"      MAC: {nic.MacAddress}");
+                        Console.WriteLine($"      Active: {nic.IsActive}");
+                        
+                        if (nic.Addresses.Any())
+                        {
+                            Console.WriteLine("      Addresses:");
+                            foreach (var addr in nic.Addresses)
+                            {
+                                var vpnIndicator = addr.IsVpnGateway ? " [VPN Gateway]" : "";
+                                Console.WriteLine($"        {addr.IpAddress} ({addr.AddressFamily}) - {addr.IpTypeDescription}{vpnIndicator}");
+                                if (!string.IsNullOrEmpty(addr.SubnetMask))
+                                    Console.WriteLine($"          Subnet: {addr.SubnetMask}");
+                                if (!string.IsNullOrEmpty(addr.Gateway))
+                                    Console.WriteLine($"          Gateway: {addr.Gateway}");
+                                if (!string.IsNullOrEmpty(addr.DnsServers))
+                                    Console.WriteLine($"          DNS: {addr.DnsServers}");
+                            }
+                        }
+                        Console.WriteLine();
+                    }
+                }
             }
             else
             {

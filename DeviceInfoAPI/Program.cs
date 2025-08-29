@@ -3,6 +3,7 @@ using DeviceInfoAPI.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
+builder.Services.AddSingleton<IIpStorageService, IpStorageService>();
 builder.Services.AddSingleton<IDeviceInfoService, DeviceInfoService>();
 
 // Configure CORS to allow local access
