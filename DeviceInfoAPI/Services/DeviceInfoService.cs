@@ -636,6 +636,7 @@ public class DeviceInfoService : IDeviceInfoService
             // and network routing patterns.
             // ============================================================================
             var isOnVpn = IsOnVpn();
+            Console.WriteLine($"DEBUG: VPN detection result: {isOnVpn}");
             
             if (isOnVpn)
             {
@@ -1049,30 +1050,46 @@ public class DeviceInfoService : IDeviceInfoService
     {
         try
         {
+            Console.WriteLine("DEBUG: IsOnVpn called - checking all network interfaces");
             var interfaces = SystemNetNetworkInterface.GetAllNetworkInterfaces();
+            Console.WriteLine($"DEBUG: Found {interfaces.Length} network interfaces");
             
             foreach (var nic in interfaces)
             {
                 if (nic.OperationalStatus == OperationalStatus.Up)
                 {
+                    Console.WriteLine($"DEBUG: Checking interface: {nic.Name} ({nic.Description})");
                     var properties = nic.GetIPProperties();
                     
                     foreach (var address in properties.UnicastAddresses)
                     {
                         if (address.Address.AddressFamily == AddressFamily.InterNetwork)
                         {
+                            Console.WriteLine($"DEBUG: Checking IPv4 address: {address.Address}");
                             // Check if this interface is connected to a VPN gateway
                             if (IsVpnGateway(address.Address, properties.GatewayAddresses))
                             {
+                                Console.WriteLine($"DEBUG: VPN detected on interface {nic.Name} with address {address.Address}");
                                 return true;
+                            }
+                            else
+                            {
+                                Console.WriteLine($"DEBUG: No VPN detected on interface {nic.Name} with address {address.Address}");
                             }
                         }
                     }
                 }
+                else
+                {
+                    Console.WriteLine($"DEBUG: Interface {nic.Name} is not operational (Status: {nic.OperationalStatus})");
+                }
             }
+            
+            Console.WriteLine("DEBUG: No VPN detected on any interface");
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"DEBUG: Exception in IsOnVpn: {ex.Message}");
             // Handle errors gracefully
         }
         
@@ -1286,6 +1303,38 @@ public class DeviceInfoService : IDeviceInfoService
     {
         try
         {
+            Console.WriteLine($"DEBUG: IsVpnGateway called for local address: {localAddress}");
+            
+            // Check if there are any gateways first
+            var hasGateways = gateways.Any(g => g.Address != null);
+            Console.WriteLine($"DEBUG: Has gateways: {hasGateways}");
+            
+            // If no gateways, this might be a VPN interface
+            // Many VPN interfaces don't have traditional gateways
+            if (!hasGateways)
+            {
+                Console.WriteLine("DEBUG: No gateways found - checking if this looks like a VPN interface");
+                
+                // Check if this is a known VPN IP range
+                var localBytes = localAddress.GetAddressBytes();
+                if (IsVpnIpAddress(localBytes))
+                {
+                    Console.WriteLine("DEBUG: IP is in known VPN range - LIKELY VPN");
+                    return true;
+                }
+                
+                // Check if this is a 10.x.x.x address (common for corporate VPNs)
+                if (localBytes[0] == 10)
+                {
+                    Console.WriteLine("DEBUG: 10.x.x.x address without gateway - LIKELY VPN");
+                    return true;
+                }
+                
+                // For now, be conservative but log this case
+                Console.WriteLine("DEBUG: No gateways but IP doesn't match known VPN patterns - assuming NOT VPN");
+                return false;
+            }
+            
             foreach (var gateway in gateways)
             {
                 var gatewayIp = gateway.Address;
@@ -1532,6 +1581,19 @@ public class DeviceInfoService : IDeviceInfoService
         
         // 172.20.0.0/16 (common corporate VPN)
         if (bytes[0] == 172 && bytes[1] >= 20 && bytes[1] <= 30) return true;
+        
+        // Check Point VPN ranges (common corporate VPN)
+        // 10.161.x.x (like your current VPN IP 10.161.11.239)
+        if (bytes[0] == 10 && bytes[1] == 161) return true;
+        
+        // 172.17.x.x (like your DNS servers 172.17.71.193)
+        if (bytes[0] == 172 && bytes[1] == 17) return true;
+        
+        // 172.30.x.x (like your DNS server 172.30.110.26)
+        if (bytes[0] == 172 && bytes[1] == 30) return true;
+        
+        // 10.8.x.x (like your DNS server 10.8.4.1)
+        if (bytes[0] == 10 && bytes[1] == 8) return true;
 
         return false;
     }

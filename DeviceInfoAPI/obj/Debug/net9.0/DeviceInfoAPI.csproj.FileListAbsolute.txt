@@ -36,3 +36,42 @@ C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\Device
 C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceInfoAPI.pdb
 C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceInfoAPI.genruntimeconfig.cache
 C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\ref\DeviceInfoAPI.dll
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\appsettings.Development.json
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\appsettings.json
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\DeviceInfoAPI.staticwebassets.endpoints.json
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\DeviceInfoAPI.exe
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\DeviceInfoAPI.deps.json
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\DeviceInfoAPI.runtimeconfig.json
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\DeviceInfoAPI.dll
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\DeviceInfoAPI.pdb
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\Microsoft.AspNetCore.OpenApi.dll
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\Microsoft.OpenApi.dll
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\Swashbuckle.AspNetCore.Swagger.dll
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\System.CodeDom.dll
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\System.Management.dll
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\runtimes\win\lib\net8.0\System.Management.dll
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceInfoAPI.csproj.AssemblyReference.cache
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\rpswa.dswa.cache.json
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceInfoAPI.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceInfoAPI.AssemblyInfoInputs.cache
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceInfoAPI.AssemblyInfo.cs
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceInfoAPI.csproj.CoreCompileInputs.cache
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceInfoAPI.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceInfoAPI.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceInfoAPI.sourcelink.json
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\rjimswa.dswa.cache.json
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\rjsmrazor.dswa.cache.json
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\rjsmcshtml.dswa.cache.json
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\scopedcss\bundle\DeviceInfoAPI.styles.css
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\staticwebassets.build.json
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\staticwebassets.build.json.cache
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\staticwebassets.development.json
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\staticwebassets.build.endpoints.json
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceIn.8EA8E02F.Up2Date
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceInfoAPI.dll
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\refint\DeviceInfoAPI.dll
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceInfoAPI.pdb
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceInfoAPI.genruntimeconfig.cache
+C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\ref\DeviceInfoAPI.dll
