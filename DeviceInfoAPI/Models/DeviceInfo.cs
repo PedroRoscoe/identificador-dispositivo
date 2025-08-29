@@ -5,6 +5,7 @@ public class DeviceInfo
     public string DeviceName { get; set; } = string.Empty;
     public string DeviceId { get; set; } = string.Empty;
     public string ExternalIpAddress { get; set; } = string.Empty;
+    public IpLocationInfo? IpLocationInfo { get; set; }
     public List<NetworkInterface> NetworkInterfaces { get; set; } = new();
     public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
 }
@@ -40,4 +41,22 @@ public enum IpAddressType
     Loopback,
     LinkLocal,
     Unknown
+}
+
+public class IpLocationInfo
+{
+    public string Country { get; set; } = string.Empty;
+    public string CountryCode { get; set; } = string.Empty;
+    public string Region { get; set; } = string.Empty;
+    public string RegionName { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string Zip { get; set; } = string.Empty;
+    public double Lat { get; set; }
+    public double Lon { get; set; }
+    public string Timezone { get; set; } = string.Empty;
+    public string Isp { get; set; } = string.Empty;
+    public string Organization { get; set; } = string.Empty;
+    public string AsNumber { get; set; } = string.Empty;
+    public string Query { get; set; } = string.Empty;
+    public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
 }

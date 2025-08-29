@@ -1,72 +1,337 @@
+// ============================================================================
+// DeviceInfoService.cs - Core business logic for gathering device and network information
+// ============================================================================
+// This service is responsible for:
+// 1. Collecting device information using Windows Management Instrumentation (WMI)
+// 2. Analyzing network interfaces and their properties
+// 3. Detecting VPN connections using sophisticated network topology analysis
+// 4. Managing external IP address storage and retrieval
+// 5. Integrating with IP-API for geolocation data
+//
+// For Java developers: This is similar to a Service class in Spring Boot
+// that handles business logic and coordinates between different components.
+// ============================================================================
+
 using DeviceInfoAPI.Models;
-using System.Management;
-using System.Net;
-using SystemNetNetworkInterface = System.Net.NetworkInformation.NetworkInterface;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Diagnostics;
+using System.Management;  // Windows Management Instrumentation (WMI) - Windows-specific API
+using System.Net;         // Network utilities like IPAddress, Dns, HttpClient
+using SystemNetNetworkInterface = System.Net.NetworkInformation.NetworkInterface;  // Alias to avoid naming conflicts
+using System.Net.NetworkInformation;  // Network interface information
+using System.Net.Sockets; // Socket operations
+using System.Text.Json;   // JSON serialization/deserialization
+using System.Text.RegularExpressions; // Regular expression support
+using System.Diagnostics; // Process and diagnostic information
 
 namespace DeviceInfoAPI.Services;
 
+/// <summary>
+/// Main service for gathering comprehensive device and network information.
+/// 
+/// This service implements the core business logic for:
+/// - Device identification using Windows WMI
+/// - Network interface analysis and classification
+/// - VPN detection using network topology analysis
+/// - External IP address management with persistent storage
+/// - IP geolocation integration
+/// 
+/// For Java developers: This class is similar to a @Service annotated class in Spring Boot.
+/// It uses dependency injection to receive its dependencies (like @Autowired in Spring).
+/// </summary>
 public class DeviceInfoService : IDeviceInfoService
 {
+    // ============================================================================
+    // DEPENDENCY INJECTION - Similar to @Autowired in Spring Boot
+    // ============================================================================
+    
+    /// <summary>
+    /// HTTP client for making external API calls to IP geolocation services.
+    /// Configured with timeout and used for querying external IP services.
+    /// </summary>
     private readonly HttpClient _httpClient;
+    
+    /// <summary>
+    /// Service for persisting and retrieving external IP addresses.
+    /// This allows us to remember the "real" internet IP even when connected to VPN.
+    /// </summary>
     private readonly IIpStorageService _ipStorageService;
+    
+    /// <summary>
+    /// Service for querying IP-API to get geolocation and ISP information.
+    /// Provides country, city, coordinates, timezone, and ISP details.
+    /// </summary>
+    private readonly IIpApiService _ipApiService;
 
-    public DeviceInfoService(IIpStorageService ipStorageService)
+    /// <summary>
+    /// Constructor for DeviceInfoService.
+    /// 
+    /// In .NET, this constructor is automatically called by the dependency injection container
+    /// when creating an instance of this service. This is similar to how Spring Boot
+    /// automatically creates and injects dependencies in Java.
+    /// 
+    /// For Java developers: This is equivalent to:
+    /// @Autowired
+    /// public DeviceInfoService(IIpStorageService ipStorageService, IIpApiService ipApiService)
+    /// </summary>
+    /// <param name="ipStorageService">Service for managing external IP storage</param>
+    /// <param name="ipApiService">Service for IP geolocation queries</param>
+    public DeviceInfoService(IIpStorageService ipStorageService, IIpApiService ipApiService)
     {
+        // ============================================================================
+        // HTTP CLIENT INITIALIZATION
+        // ============================================================================
+        // Create a new HttpClient instance with a 10-second timeout.
+        // This is used for querying external IP services like ipify.org, icanhazip.com, etc.
+        // 
+        // Note: In production applications, you might want to use HttpClientFactory
+        // or a singleton HttpClient to avoid socket exhaustion issues.
+        // ============================================================================
         _httpClient = new HttpClient
         {
-            Timeout = TimeSpan.FromSeconds(10)
+            Timeout = TimeSpan.FromSeconds(10)  // 10 second timeout for external API calls
         };
-        _ipStorageService = ipStorageService;
+        
+        // ============================================================================
+        // DEPENDENCY INJECTION - Store injected services
+        // ============================================================================
+        // These services were injected by the DI container and are now stored
+        // as private readonly fields for use throughout this class.
+        // ============================================================================
+        _ipStorageService = ipStorageService;  // Service for storing/retrieving external IPs
+        _ipApiService = ipApiService;          // Service for IP geolocation queries
     }
 
+    /// <summary>
+    /// Asynchronous version of GetDeviceInfo that wraps the synchronous method in a Task.
+    /// 
+    /// For Java developers: This is similar to wrapping a synchronous method in
+    /// CompletableFuture.supplyAsync() in Java.
+    /// </summary>
+    /// <returns>A Task containing the DeviceInfo object</returns>
     public async Task<DeviceInfo> GetDeviceInfoAsync()
     {
+        // ============================================================================
+        // ASYNC WRAPPER - Converting synchronous to asynchronous
+        // ============================================================================
+        // Task.Run() runs the synchronous GetDeviceInfo() method on a background thread.
+        // This prevents blocking the main thread while gathering device information.
+        // 
+        // In Java, this would be equivalent to:
+        // return CompletableFuture.supplyAsync(() -> getDeviceInfo());
+        // ============================================================================
         return await Task.Run(() => GetDeviceInfo());
     }
 
+    /// <summary>
+    /// Main method for gathering comprehensive device and network information.
+    /// 
+    /// This method orchestrates the entire process of collecting device information:
+    /// 1. Gets the external IP address (with VPN-aware logic)
+    /// 2. Retrieves IP geolocation information
+    /// 3. Collects device name and ID using Windows WMI
+    /// 4. Analyzes all network interfaces
+    /// 5. Returns a complete DeviceInfo object
+    /// 
+    /// For Java developers: This is the main business logic method, similar to
+    /// a service method in Spring Boot that coordinates multiple operations.
+    /// </summary>
+    /// <returns>A complete DeviceInfo object with all device and network information</returns>
     public DeviceInfo GetDeviceInfo()
     {
-        return new DeviceInfo
+        Console.WriteLine("GetDeviceInfo: Starting...");
+        
+        // ============================================================================
+        // STEP 1: GET EXTERNAL IP ADDRESS
+        // ============================================================================
+        // This method handles VPN detection and returns either:
+        // - Current external IP (when not on VPN) with "(Current - Stored for VPN use)" suffix
+        // - Stored external IP (when on VPN) with "(Stored - Last Updated: X minutes ago)" suffix
+        // ============================================================================
+        var externalIp = GetExternalIpAddress();
+        Console.WriteLine($"GetDeviceInfo: Got external IP: '{externalIp}'");
+        
+        Console.WriteLine("GetDeviceInfo: About to get IP location info...");
+        
+        // ============================================================================
+        // DEBUGGING: DIRECT IP-API TEST
+        // ============================================================================
+        // This is a temporary debugging section to test if the IP-API service is working.
+        // It directly queries the IP-API service with a hardcoded IP to verify functionality.
+        // This should be removed in production code.
+        // ============================================================================
+        Console.WriteLine("GetDeviceInfo: Testing IP-API service directly...");
+        var testIp = "45.184.70.195";
+        var testResult = _ipApiService.GetIpInfoAsync(testIp).Result;  // .Result blocks until async operation completes
+        Console.WriteLine($"GetDeviceInfo: Direct IP-API test result: {testResult != null}");
+        if (testResult != null)
         {
-            DeviceName = GetDeviceName(),
-            DeviceId = GetDeviceId(),
-            NetworkInterfaces = GetNetworkInterfaces(),
-            ExternalIpAddress = GetExternalIpAddress(),
-            LastUpdated = DateTime.UtcNow
+            Console.WriteLine($"GetDeviceInfo: Direct test - Country: {testResult.Country}, City: {testResult.City}");
+        }
+        
+        // ============================================================================
+        // STEP 2: GET IP GEOLOCATION INFORMATION
+        // ============================================================================
+        // Query IP-API to get location, ISP, and other information for the external IP.
+        // Note: We use .Result here because this method is synchronous, but GetIpLocationInfo
+        // is asynchronous. In production, consider making this method async.
+        // ============================================================================
+        var ipLocationInfo = GetIpLocationInfo(externalIp).Result; // Use .Result here since we can't make this method async
+        Console.WriteLine($"GetDeviceInfo: Got IP location info: {ipLocationInfo != null}");
+        
+        if (ipLocationInfo != null)
+        {
+            Console.WriteLine($"GetDeviceInfo: IP location details - Country: {ipLocationInfo.Country}, City: {ipLocationInfo.City}");
+        }
+        
+        // ============================================================================
+        // STEP 3: BUILD COMPLETE DEVICE INFO OBJECT
+        // ============================================================================
+        // Create a DeviceInfo object containing all gathered information.
+        // This follows the Builder pattern, setting properties one by one.
+        // 
+        // For Java developers: This is similar to using a Builder class or
+        // setting properties on a POJO (Plain Old Java Object).
+        // ============================================================================
+        var result = new DeviceInfo
+        {
+            DeviceName = GetDeviceName(),                    // Get computer name from WMI
+            DeviceId = GetDeviceId(),                        // Get unique device identifier
+            NetworkInterfaces = GetNetworkInterfaces(),      // Get all network interface details
+            ExternalIpAddress = externalIp,                  // External IP with VPN context
+            IpLocationInfo = ipLocationInfo,                 // Geolocation and ISP information
+            LastUpdated = DateTime.UtcNow                    // Current timestamp in UTC
         };
+        
+        Console.WriteLine($"GetDeviceInfo: Created DeviceInfo with IpLocationInfo: {result.IpLocationInfo != null}");
+        return result;
     }
 
+    /// <summary>
+    /// Retrieves the computer system name using Windows Management Instrumentation (WMI).
+    /// 
+    /// This method queries the Windows WMI database to get the computer name from the
+    /// Win32_ComputerSystem class. WMI is a Windows-specific API that provides access
+    /// to system information and configuration.
+    /// 
+    /// For Java developers: This is similar to using JNA (Java Native Access) or
+    /// JNI (Java Native Interface) to call Windows system APIs. In .NET, we have
+    /// direct access to these APIs through the System.Management namespace.
+    /// 
+    /// Fallback strategy:
+    /// 1. Try to get name from WMI (most accurate)
+    /// 2. Fall back to Environment.MachineName if WMI fails
+    /// </summary>
+    /// <returns>The computer system name, or fallback to environment variable</returns>
     private string GetDeviceName()
     {
         try
         {
+            // ============================================================================
+            // WMI QUERY - Windows Management Instrumentation
+            // ============================================================================
+            // WMI is a Windows infrastructure for management data and operations.
+            // It allows us to query system information like computer names, hardware
+            // details, and configuration settings.
+            // 
+            // The query "SELECT Name FROM Win32_ComputerSystem" retrieves the computer
+            // name from the Win32_ComputerSystem WMI class, which represents the
+            // computer system and its properties.
+            // ============================================================================
             using var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_ComputerSystem");
+            
+            // ============================================================================
+            // ITERATE THROUGH WMI RESULTS
+            // ============================================================================
+            // WMI queries can return multiple objects, but typically there's only one
+            // computer system. We iterate through the results and take the first one.
+            // 
+            // For Java developers: This is similar to iterating through a ResultSet
+            // from a database query.
+            // ============================================================================
             foreach (ManagementObject obj in searcher.Get())
             {
+                // ============================================================================
+                // EXTRACT NAME PROPERTY WITH NULL COALESCING
+                // ============================================================================
+                // obj["Name"] gets the "Name" property from the WMI object.
+                // ?.ToString() safely converts to string if the property exists.
+                // ?? Environment.MachineName provides a fallback if the property is null.
+                // 
+                // This is equivalent to Java's Optional.orElse() pattern:
+                // Optional.ofNullable(obj.get("Name")).map(Object::toString).orElse(Environment.getProperty("COMPUTERNAME"))
+                // ============================================================================
                 return obj["Name"]?.ToString() ?? Environment.MachineName;
             }
         }
         catch (Exception)
         {
+            // ============================================================================
+            // EXCEPTION HANDLING - Graceful degradation
+            // ============================================================================
+            // If WMI fails for any reason (permissions, service not running, etc.),
+            // we silently catch the exception and fall back to the environment variable.
+            // 
+            // In production, you might want to log this exception for debugging.
+            // ============================================================================
             // Fallback to environment variable
         }
         
+        // ============================================================================
+        // FALLBACK - Environment variable
+        // ============================================================================
+        // Environment.MachineName is a .NET property that gets the computer name
+        // from the COMPUTERNAME environment variable. This is a reliable fallback
+        // that doesn't require special permissions or WMI access.
+        // ============================================================================
         return Environment.MachineName;
     }
 
+    /// <summary>
+    /// Retrieves a unique device identifier using Windows Management Instrumentation (WMI).
+    /// 
+    /// This method attempts to get the BIOS/UEFI UUID from the Win32_ComputerSystemProduct
+    /// WMI class, which provides a hardware-based unique identifier that persists across
+    /// operating system installations and hardware changes.
+    /// 
+    /// For Java developers: This is similar to getting hardware identifiers like
+    /// MAC addresses or processor IDs in Java, but WMI provides more reliable
+    /// hardware information on Windows systems.
+    /// 
+    /// Fallback strategy:
+    /// 1. Try to get UUID from WMI (hardware-based, most reliable)
+    /// 2. Generate a hash from machine name if WMI fails
+    /// </summary>
+    /// <returns>A unique device identifier string</returns>
     private string GetDeviceId()
     {
         try
         {
+            // ============================================================================
+            // WMI QUERY - Hardware UUID from BIOS/UEFI
+            // ============================================================================
+            // Win32_ComputerSystemProduct represents the computer system product
+            // and contains hardware information like UUID, SKU, and vendor details.
+            // 
+            // The UUID is typically stored in the BIOS/UEFI firmware and provides
+            // a unique identifier for the physical hardware.
+            // ============================================================================
             using var searcher = new ManagementObjectSearcher("SELECT UUID FROM Win32_ComputerSystemProduct");
+            
+            // ============================================================================
+            // ITERATE THROUGH WMI RESULTS
+            // ============================================================================
+            // Similar to GetDeviceName(), we iterate through the results to find
+            // the UUID property. There's typically only one computer system product.
+            // ============================================================================
             foreach (ManagementObject obj in searcher.Get())
             {
                 var uuid = obj["UUID"]?.ToString();
+                
+                // ============================================================================
+                // VALIDATE UUID - Check if it's not null or empty
+                // ============================================================================
+                // We only return the UUID if it's a valid, non-empty string.
+                // This prevents returning null or empty values that could cause issues.
+                // ============================================================================
                 if (!string.IsNullOrEmpty(uuid))
                 {
                     return uuid;
@@ -75,54 +340,164 @@ public class DeviceInfoService : IDeviceInfoService
         }
         catch (Exception)
         {
+            // ============================================================================
+            // EXCEPTION HANDLING - Graceful degradation
+            // ============================================================================
+            // If WMI fails, we fall back to generating a hash from the machine name.
+            // This ensures we always return a unique identifier, even if hardware
+            // information is unavailable.
+            // ============================================================================
             // Fallback to machine name hash
         }
 
-        // Fallback: generate a hash from machine name
+        // ============================================================================
+        // FALLBACK - Generate hash from machine name
+        // ============================================================================
+        // If WMI fails or returns no UUID, we generate a unique identifier by:
+        // 1. Converting the machine name to UTF-8 bytes
+        // 2. Converting to Base64 string
+        // 3. Replacing URL-unsafe characters
+        // 4. Truncating to a reasonable length
+        // 
+        // This provides a consistent, unique identifier based on the computer name.
+        // 
+        // For Java developers: This is similar to:
+        // String hash = Base64.getEncoder().encodeToString(machineName.getBytes("UTF-8"))
+        //     .replace("/", "_").replace("+", "-").replace("=", "")
+        //     .substring(0, Math.min(16, machineName.length()));
+        // ============================================================================
         return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Environment.MachineName))
-            .Replace("/", "_")
-            .Replace("+", "-")
-            .Replace("=", "")
-            .Substring(0, Math.Min(16, Environment.MachineName.Length));
+            .Replace("/", "_")      // Replace URL-unsafe forward slash
+            .Replace("+", "-")      // Replace URL-unsafe plus sign
+            .Replace("=", "")       // Remove padding equals signs
+            .Substring(0, Math.Min(16, Environment.MachineName.Length));  // Limit length to 16 characters
     }
 
+    /// <summary>
+    /// Collects information about all active network interfaces on the system.
+    /// 
+    /// This method analyzes each network interface to determine:
+    /// - Interface status and operational state
+    /// - IP addresses (both IPv4 and IPv6)
+    /// - MAC addresses and interface types
+    /// - Network configuration (gateways, DNS servers, subnet masks)
+    /// - VPN detection and classification
+    /// 
+    /// For Java developers: This is similar to using Java's NetworkInterface class
+    /// to enumerate network interfaces, but with additional Windows-specific
+    /// capabilities through .NET's System.Net.NetworkInformation namespace.
+    /// 
+    /// The method filters interfaces to only include those that are:
+    /// 1. Operationally up (connected and active)
+    /// 2. Have valid IP addresses assigned
+    /// 3. Are not loopback or link-local only
+    /// </summary>
+    /// <returns>A list of NetworkInterface objects representing active network adapters</returns>
     private List<Models.NetworkInterface> GetNetworkInterfaces()
     {
+        // ============================================================================
+        // INITIALIZE RESULT LIST
+        // ============================================================================
+        // Create an empty list to store network interface information.
+        // We'll populate this list as we discover active interfaces.
+        // ============================================================================
         var networkInterfaces = new List<Models.NetworkInterface>();
         
         try
         {
+            // ============================================================================
+            // GET ALL NETWORK INTERFACES
+            // ============================================================================
+            // SystemNetNetworkInterface.GetAllNetworkInterfaces() returns all network
+            // interfaces on the system, including physical adapters, virtual adapters,
+            // VPN interfaces, and loopback interfaces.
+            // 
+            // For Java developers: This is similar to NetworkInterface.getNetworkInterfaces()
+            // in Java, but returns a more detailed collection of interface information.
+            // ============================================================================
             var interfaces = SystemNetNetworkInterface.GetAllNetworkInterfaces();
             
+            // ============================================================================
+            // ITERATE THROUGH EACH INTERFACE
+            // ============================================================================
+            // Process each network interface to extract relevant information.
+            // We'll filter out inactive interfaces and those without valid IP addresses.
+            // ============================================================================
             foreach (var nic in interfaces)
             {
-                // Only process active interfaces
+                // ============================================================================
+                // FILTER: ONLY ACTIVE INTERFACES
+                // ============================================================================
+                // OperationalStatus.Up means the interface is connected and operational.
+                // We skip interfaces that are down, disconnected, or in error states.
+                // 
+                // For Java developers: This is similar to checking if an interface
+                // is up and running in Java's NetworkInterface class.
+                // ============================================================================
                 if (nic.OperationalStatus != OperationalStatus.Up)
                     continue;
 
+                // ============================================================================
+                // GET NETWORK ADDRESSES FOR THIS INTERFACE
+                // ============================================================================
+                // This method extracts all IP addresses, subnet masks, gateways,
+                // DNS servers, and performs IP classification for the interface.
+                // ============================================================================
                 var addresses = GetNetworkAddresses(nic);
                 
-                // Only add interfaces that have valid IP addresses
+                // ============================================================================
+                // FILTER: ONLY INTERFACES WITH VALID IP ADDRESSES
+                // ============================================================================
+                // We only include interfaces that have at least one valid IP address.
+                // This filters out interfaces that might be up but don't have
+                // network configuration (like some VPN interfaces).
+                // 
+                // For Java developers: This is similar to checking if an interface
+                // has any InetAddress objects assigned to it.
+                // ============================================================================
                 if (addresses.Any(addr => IsValidIpAddress(addr.IpAddress)))
                 {
+                    // ============================================================================
+                    // CREATE NETWORK INTERFACE OBJECT
+                    // ============================================================================
+                    // Build a NetworkInterface object (our custom model) with all the
+                    // information we've gathered about this network adapter.
+                    // 
+                    // For Java developers: This is similar to creating a DTO (Data Transfer Object)
+                    // or entity object to represent the network interface data.
+                    // ============================================================================
                     var networkInterface = new Models.NetworkInterface
                     {
-                        Name = nic.Name,
-                        Description = nic.Description,
-                        Type = nic.NetworkInterfaceType.ToString(),
-                        Status = nic.OperationalStatus.ToString(),
-                        MacAddress = FormatMacAddress(nic.GetPhysicalAddress()),
-                        IsActive = true,
-                        Addresses = addresses.Where(addr => IsValidIpAddress(addr.IpAddress)).ToList()
+                        Name = nic.Name,                                    // Interface name (e.g., "Ethernet 3")
+                        Description = nic.Description,                      // Human-readable description
+                        Type = nic.NetworkInterfaceType.ToString(),         // Interface type (Ethernet, WiFi, etc.)
+                        Status = nic.OperationalStatus.ToString(),          // Current status (Up, Down, etc.)
+                        MacAddress = FormatMacAddress(nic.GetPhysicalAddress()), // MAC address in readable format
+                        IsActive = true,                                    // Mark as active since we filtered for Up status
+                        Addresses = addresses.Where(addr => IsValidIpAddress(addr.IpAddress)).ToList() // Filter valid addresses
                     };
 
+                    // ============================================================================
+                    // ADD TO RESULT LIST
+                    // ============================================================================
+                    // Add this interface to our collection of active network interfaces.
+                    // ============================================================================
                     networkInterfaces.Add(networkInterface);
                 }
             }
         }
         catch (Exception)
         {
-            // Fallback: create a basic interface with localhost
+            // ============================================================================
+            // EXCEPTION HANDLING - Fallback to localhost interface
+            // ============================================================================
+            // If anything goes wrong while gathering network interface information
+            // (permissions, system errors, etc.), we create a fallback interface
+            // with localhost information to ensure the API always returns something useful.
+            // 
+            // For Java developers: This is similar to providing a default response
+            // when an operation fails, ensuring the API doesn't crash completely.
+            // ============================================================================
             networkInterfaces.Add(new Models.NetworkInterface
             {
                 Name = "Localhost",
@@ -135,13 +510,13 @@ public class DeviceInfoService : IDeviceInfoService
                 {
                     new NetworkAddress
                     {
-                        IpAddress = "127.0.0.1",
-                        AddressFamily = "IPv4",
-                        SubnetMask = "255.0.0.0",
-                        Gateway = "",
-                        DnsServers = "",
-                        IpType = IpAddressType.Loopback,
-                        IpTypeDescription = "Loopback address"
+                        IpAddress = "127.0.0.1",                    // Standard localhost IP
+                        AddressFamily = "IPv4",                      // IPv4 address family
+                        SubnetMask = "255.0.0.0",                   // Standard localhost subnet mask
+                        Gateway = "",                                // No gateway for localhost
+                        DnsServers = "",                             // No DNS servers for localhost
+                        IpType = IpAddressType.Loopback,             // Mark as loopback address
+                        IpTypeDescription = "Loopback address"       // Human-readable description
                     }
                 }
             });
@@ -208,43 +583,151 @@ public class DeviceInfoService : IDeviceInfoService
         return addresses;
     }
 
+    /// <summary>
+    /// Intelligently determines the external IP address with VPN-aware logic.
+    /// 
+    /// This is one of the most important methods in the application. It implements
+    /// a smart strategy for external IP management that works both when connected
+    /// to a VPN and when using a direct internet connection.
+    /// 
+    /// Strategy Overview:
+    /// 1. **VPN Detection**: First determine if we're currently connected to a VPN
+    /// 2. **VPN Active**: Return the last known external IP from persistent storage
+    /// 3. **No VPN**: Query external services for current IP and store it for future use
+    /// 4. **Fallback**: If current IP detection fails, try to return stored IP
+    /// 
+    /// For Java developers: This method demonstrates several .NET patterns:
+    /// - Exception handling with try-catch blocks
+    /// - Async/await pattern (though we use .Result for synchronous compatibility)
+    /// - String interpolation with $"" syntax
+    /// - Null coalescing operators (??)
+    /// 
+    /// The method ensures that users always know their "real" internet IP address,
+    /// even when connected to a VPN that would normally hide it.
+    /// </summary>
+    /// <returns>
+    /// External IP address with context information:
+    /// - "IP (Current - Stored for VPN use)" when not on VPN
+    /// - "IP (Stored - Last Updated: X minutes ago)" when on VPN
+    /// - "No stored external IP available (VPN Active)" if no stored IP exists
+    /// - "Unable to determine external IP" if all methods fail
+    /// </returns>
     private string GetExternalIpAddress()
     {
         try
         {
-            // Check if we're on a VPN
+            // ============================================================================
+            // STEP 1: VPN DETECTION
+            // ============================================================================
+            // First, we need to determine if we're currently connected to a VPN.
+            // This is crucial because VPNs hide your real external IP address.
+            // 
+            // The IsOnVpn() method uses sophisticated network topology analysis
+            // to detect VPN connections by analyzing gateway addresses, subnet masks,
+            // and network routing patterns.
+            // ============================================================================
             var isOnVpn = IsOnVpn();
             
             if (isOnVpn)
             {
-                // If on VPN, return the stored external IP with timestamp
+                // ============================================================================
+                // SCENARIO: CONNECTED TO VPN
+                // ============================================================================
+                // When connected to a VPN, external IP services will return the VPN's IP,
+                // not your real internet IP address. To solve this, we use a clever approach:
+                // 
+                // 1. We store the external IP when NOT connected to VPN
+                // 2. When VPN is active, we retrieve and return the stored IP
+                // 3. This ensures users always know their "real" internet IP
+                // 
+                // For Java developers: This is similar to using a cache or persistent
+                // storage to remember previous values when current detection is unreliable.
+                // ============================================================================
+                
+                // ============================================================================
+                // RETRIEVE STORED EXTERNAL IP
+                // ============================================================================
+                // Get the last known external IP address from persistent storage.
+                // This IP was stored when we were NOT connected to a VPN.
+                // 
+                // Note: We use .Result here because this method is synchronous.
+                // In production, consider making this method async for better performance.
+                // ============================================================================
                 var storedIp = _ipStorageService.GetLastKnownExternalIpAsync().Result;
                 var lastUpdate = _ipStorageService.GetLastUpdateTimeAsync().Result;
                 
                 if (!string.IsNullOrEmpty(storedIp))
                 {
+                    // ============================================================================
+                    // SUCCESS: RETURN STORED IP WITH TIMESTAMP
+                    // ============================================================================
+                    // We have a stored IP, so return it with information about when it was stored.
+                    // The GetTimeAgo() method converts the timestamp to a human-readable format
+                    // like "15 minutes ago" or "2 hours ago".
+                    // 
+                    // For Java developers: This is similar to formatting timestamps using
+                    // Java's Duration or Period classes, or libraries like Joda Time.
+                    // ============================================================================
                     var timeAgo = lastUpdate.HasValue ? GetTimeAgo(lastUpdate.Value) : "Unknown";
                     return $"{storedIp} (Stored - Last Updated: {timeAgo})";
                 }
                 else
                 {
+                    // ============================================================================
+                    // NO STORED IP AVAILABLE
+                    // ============================================================================
+                    // This can happen if:
+                    // 1. The application is running for the first time
+                    // 2. The stored IP was deleted or corrupted
+                    // 3. The storage service failed
+                    // 
+                    // We return a clear message indicating the situation.
+                    // ============================================================================
                     return "No stored external IP available (VPN Active)";
                 }
             }
             else
             {
-                // Not on VPN, get current external IP and store it
+                // ============================================================================
+                // SCENARIO: NOT CONNECTED TO VPN
+                // ============================================================================
+                // When not connected to a VPN, we can directly query external IP services
+                // to get our current external IP address. This is the "real" internet IP
+                // that we want to store for future use when VPN is active.
+                // ============================================================================
+                
+                // ============================================================================
+                // GET CURRENT EXTERNAL IP
+                // ============================================================================
+                // Query external IP services like ipify.org, icanhazip.com, etc.
+                // to determine our current external IP address.
+                // ============================================================================
                 var currentIp = GetCurrentExternalIp();
                 
                 if (!string.IsNullOrEmpty(currentIp) && currentIp != "Unable to determine")
                 {
-                    // Store the current IP for future use
+                    // ============================================================================
+                    // SUCCESS: STORE AND RETURN CURRENT IP
+                    // ============================================================================
+                    // We successfully got the current external IP. Now we:
+                    // 1. Store it in persistent storage for future VPN use
+                    // 2. Return it with a suffix indicating it's current
+                    // 
+                    // Note: We use .Wait() here because SaveExternalIpAsync is async
+                    // but this method is synchronous. In production, consider making
+                    // this method async for better performance.
+                    // ============================================================================
                     _ipStorageService.SaveExternalIpAsync(currentIp).Wait();
                     return currentIp + " (Current - Stored for VPN use)";
                 }
                 else
                 {
-                    // Try to return stored IP as fallback
+                    // ============================================================================
+                    // CURRENT IP DETECTION FAILED - TRY STORED IP AS FALLBACK
+                    // ============================================================================
+                    // External IP services failed, but we might have a stored IP
+                    // from a previous successful detection. Try to return that instead.
+                    // ============================================================================
                     var storedIp = _ipStorageService.GetLastKnownExternalIpAsync().Result;
                     if (!string.IsNullOrEmpty(storedIp))
                     {
@@ -253,13 +736,35 @@ public class DeviceInfoService : IDeviceInfoService
                         return $"{storedIp} (Stored - Last Updated: {timeAgo})";
                     }
                     
+                    // ============================================================================
+                    // COMPLETE FAILURE
+                    // ============================================================================
+                    // Both current IP detection and stored IP retrieval failed.
+                    // Return a clear error message.
+                    // ============================================================================
                     return "Unable to determine external IP";
                 }
             }
         }
         catch
         {
-            // Fallback to stored IP if available
+            // ============================================================================
+            // EXCEPTION HANDLING - GRACEFUL DEGRADATION
+            // ============================================================================
+            // If anything goes wrong in the main logic, we try to fall back to
+            // the stored IP as a last resort. This ensures the application
+            // doesn't crash completely and can still provide some useful information.
+            // 
+            // For Java developers: This is similar to providing fallback behavior
+            // in catch blocks to ensure graceful degradation of service.
+            // ============================================================================
+            
+            // ============================================================================
+            // FALLBACK: TRY STORED IP
+            // ============================================================================
+            // Attempt to retrieve the stored IP as a fallback option.
+            // We wrap this in another try-catch to handle any storage service errors.
+            // ============================================================================
             try
             {
                 var storedIp = _ipStorageService.GetLastKnownExternalIpAsync().Result;
@@ -272,9 +777,22 @@ public class DeviceInfoService : IDeviceInfoService
             }
             catch
             {
+                // ============================================================================
+                // IGNORE STORAGE ERRORS
+                // ============================================================================
+                // If even the fallback fails, we silently ignore the error
+                // and return the generic failure message. This prevents
+                // error cascading and ensures the API remains stable.
+                // ============================================================================
                 // Ignore errors
             }
             
+            // ============================================================================
+            // FINAL FALLBACK
+            // ============================================================================
+            // All methods have failed. Return a generic error message
+            // that indicates the situation without exposing internal errors.
+            // ============================================================================
             return "Unable to determine external IP";
         }
     }
@@ -343,6 +861,109 @@ public class DeviceInfoService : IDeviceInfoService
         {
             return "Just now";
         }
+    }
+
+    private async Task<IpLocationInfo?> GetIpLocationInfo(string externalIpAddress)
+    {
+        try
+        {
+            Console.WriteLine($"GetIpLocationInfo: Starting with input: '{externalIpAddress}'");
+            
+            // Extract the actual IP address from the formatted string
+            var ipAddress = ExtractIpAddress(externalIpAddress);
+            Console.WriteLine($"GetIpLocationInfo: Extracted IP: '{ipAddress}'");
+            
+            if (string.IsNullOrEmpty(ipAddress))
+            {
+                Console.WriteLine("GetIpLocationInfo: IP address is null or empty, returning null");
+                return null;
+            }
+
+            Console.WriteLine($"GetIpLocationInfo: About to query IP-API for IP: {ipAddress}");
+            
+            // Query IP-API for location information
+            var ipApiResponse = await _ipApiService.GetIpInfoAsync(ipAddress);
+            Console.WriteLine($"GetIpLocationInfo: IP-API response received: {ipApiResponse != null}");
+            
+            if (ipApiResponse == null)
+            {
+                Console.WriteLine("GetIpLocationInfo: IP-API response is null, returning null");
+                return null;
+            }
+
+            Console.WriteLine($"GetIpLocationInfo: IP-API response details - Status: {ipApiResponse.Status}, Country: {ipApiResponse.Country}, City: {ipApiResponse.City}");
+
+            var result = new IpLocationInfo
+            {
+                Country = ipApiResponse.Country ?? string.Empty,
+                CountryCode = ipApiResponse.CountryCode ?? string.Empty,
+                Region = ipApiResponse.Region ?? string.Empty,
+                RegionName = ipApiResponse.RegionName ?? string.Empty,
+                City = ipApiResponse.City ?? string.Empty,
+                Zip = ipApiResponse.Zip ?? string.Empty,
+                Lat = ipApiResponse.Lat ?? 0.0,
+                Lon = ipApiResponse.Lon ?? 0.0,
+                Timezone = ipApiResponse.Timezone ?? string.Empty,
+                Isp = ipApiResponse.Isp ?? string.Empty,
+                Organization = ipApiResponse.Org ?? string.Empty,
+                AsNumber = ipApiResponse.As ?? string.Empty,
+                Query = ipApiResponse.Query ?? string.Empty,
+                LastUpdated = DateTime.UtcNow
+            };
+
+            Console.WriteLine($"GetIpLocationInfo: Created IpLocationInfo object: Country={result.Country}, City={result.City}");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            // Handle errors gracefully
+            Console.WriteLine($"GetIpLocationInfo: Exception occurred: {ex.Message}");
+            Console.WriteLine($"GetIpLocationInfo: Stack trace: {ex.StackTrace}");
+            return null;
+        }
+    }
+
+    private string ExtractIpAddress(string externalIpAddress)
+    {
+        try
+        {
+            Console.WriteLine($"ExtractIpAddress: Input: '{externalIpAddress}'");
+            
+            // Handle different formats:
+            // "123.45.67.89 (Current - Stored for VPN use)"
+            // "123.45.67.89 (Stored - Last Updated: X minutes ago)"
+            // "123.45.67.89"
+            
+            var parts = externalIpAddress.Split(' ');
+            Console.WriteLine($"ExtractIpAddress: Split into {parts.Length} parts");
+            
+            if (parts.Length > 0)
+            {
+                Console.WriteLine($"ExtractIpAddress: First part: '{parts[0]}'");
+                
+                if (System.Net.IPAddress.TryParse(parts[0], out _))
+                {
+                    Console.WriteLine($"ExtractIpAddress: Successfully parsed IP: '{parts[0]}'");
+                    return parts[0];
+                }
+                else
+                {
+                    Console.WriteLine($"ExtractIpAddress: Failed to parse IP from '{parts[0]}'");
+                }
+            }
+            else
+            {
+                Console.WriteLine("ExtractIpAddress: No parts found after split");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ExtractIpAddress: Error: {ex.Message}");
+            Console.WriteLine($"ExtractIpAddress: Stack trace: {ex.StackTrace}");
+        }
+        
+        Console.WriteLine("ExtractIpAddress: Returning empty string");
+        return string.Empty;
     }
 
     private bool IsOnVpn()
