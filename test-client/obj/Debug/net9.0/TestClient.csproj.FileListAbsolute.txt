@@ -1,0 +1,14 @@
+C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\test-client\bin\Debug\net9.0\TestClient.exe
+C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\test-client\bin\Debug\net9.0\TestClient.deps.json
+C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\test-client\bin\Debug\net9.0\TestClient.runtimeconfig.json
+C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\test-client\bin\Debug\net9.0\TestClient.dll
+C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\test-client\bin\Debug\net9.0\TestClient.pdb
+C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\test-client\obj\Debug\net9.0\TestClient.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\test-client\obj\Debug\net9.0\TestClient.AssemblyInfoInputs.cache
+C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\test-client\obj\Debug\net9.0\TestClient.AssemblyInfo.cs
+C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\test-client\obj\Debug\net9.0\TestClient.csproj.CoreCompileInputs.cache
+C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\test-client\obj\Debug\net9.0\TestClient.dll
+C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\test-client\obj\Debug\net9.0\refint\TestClient.dll
+C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\test-client\obj\Debug\net9.0\TestClient.pdb
+C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\test-client\obj\Debug\net9.0\TestClient.genruntimeconfig.cache
+C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\test-client\obj\Debug\net9.0\ref\TestClient.dll
