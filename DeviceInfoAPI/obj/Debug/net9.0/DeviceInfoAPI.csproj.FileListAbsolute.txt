@@ -76,3 +76,4 @@ C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-di
 C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceInfoAPI.genruntimeconfig.cache
 C:\Users\F8241998\OneDrive - Banco do Brasil S.A\Documentos\acr-identificador-dispositivo\identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\ref\DeviceInfoAPI.dll
 C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\DeviceInfoAPI\obj\Debug\net9.0\DeviceInfoAPI.sourcelink.json
+C:\Users\pedro\OneDrive\Documentos\Projetos\acr-identificador-dispositivo\DeviceInfoAPI\bin\Debug\net9.0\Data\MaliciousApplicationsList.json

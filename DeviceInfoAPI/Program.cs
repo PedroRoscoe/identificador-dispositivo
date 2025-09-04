@@ -39,6 +39,9 @@ builder.Services.AddSingleton<IEnhancedIpStorageService, EnhancedIpStorageServic
 builder.Services.AddSingleton<IIpApiService, IpApiService>();                     // IP geolocation API service
 builder.Services.AddSingleton<IDeviceInfoService, DeviceInfoService>();           // Main device info service
 builder.Services.AddSingleton<IRiskAnalysisService, RiskAnalysisService>();      // Risk analysis service
+builder.Services.AddSingleton<IMaliciousApplicationsService, MaliciousApplicationsService>(); // Malicious applications detection service
+builder.Services.AddSingleton<IMaliciousApplicationsStorageService, MaliciousApplicationsStorageService>(); // Encrypted storage service for malicious applications
+builder.Services.AddSingleton<MaliciousApplicationsMigrationService>(); // Migration service for malicious applications
 
 // ============================================================================
 // CORS (CROSS-ORIGIN RESOURCE SHARING) CONFIGURATION
@@ -724,11 +727,24 @@ try
 {
     var enhancedStorageService = app.Services.GetRequiredService<IEnhancedIpStorageService>();
     await enhancedStorageService.MigrateToEncryptedStorageAsync();
-    Console.WriteLine("Data migration completed successfully.");
+    Console.WriteLine("Enhanced storage data migration completed successfully.");
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"Data migration failed: {ex.Message}");
+    Console.WriteLine($"Enhanced storage data migration failed: {ex.Message}");
+    Console.WriteLine("Application will continue with existing data.");
+}
+
+// Migrate malicious applications from JSON to encrypted format
+try
+{
+    var maliciousAppsMigrationService = app.Services.GetRequiredService<MaliciousApplicationsMigrationService>();
+    await maliciousAppsMigrationService.MigrateFromJsonAsync();
+    Console.WriteLine("Malicious applications data migration completed successfully.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Malicious applications data migration failed: {ex.Message}");
     Console.WriteLine("Application will continue with existing data.");
 }
 

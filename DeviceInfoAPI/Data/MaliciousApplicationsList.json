@@ -1,0 +1,383 @@
+{
+  "maliciousApplications": {
+    "remoteAccessTools": {
+      "category": "Remote Access & Control",
+      "description": "Tools commonly used for legitimate remote administration but often abused by attackers",
+      "applications": [
+        {
+          "name": "AnyDesk",
+          "processNames": ["AnyDesk.exe", "AnyDeskService.exe"],
+          "description": "Remote desktop software often used by attackers for persistence",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "Registry", "Network"]
+        },
+        {
+          "name": "TeamViewer",
+          "processNames": ["TeamViewer.exe", "TeamViewer_Service.exe"],
+          "description": "Remote access tool frequently abused by malware",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "Registry", "Network"]
+        },
+        {
+          "name": "VNC",
+          "processNames": ["vncviewer.exe", "vncconfig.exe", "winvnc.exe"],
+          "description": "Virtual Network Computing tools used for unauthorized access",
+          "threatLevel": "High",
+          "detectionMethods": ["Process", "Registry", "Network"]
+        },
+        {
+          "name": "Remote Desktop Protocol",
+          "processNames": ["mstsc.exe", "termsrv.dll"],
+          "description": "Windows built-in remote desktop, often enabled by attackers",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "Registry", "Services"]
+        },
+        {
+          "name": "LogMeIn",
+          "processNames": ["LogMeIn.exe", "LogMeInSystray.exe"],
+          "description": "Remote access software with potential for abuse",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "Registry", "Network"]
+        }
+      ]
+    },
+    "networkTools": {
+      "category": "Network Analysis & Attack Tools",
+      "description": "Tools used for network reconnaissance and attacks",
+      "applications": [
+        {
+          "name": "Nmap",
+          "processNames": ["nmap.exe", "nmap-service.exe"],
+          "description": "Network scanner used for reconnaissance",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "Network", "FileSystem"]
+        },
+        {
+          "name": "Wireshark",
+          "processNames": ["wireshark.exe", "tshark.exe"],
+          "description": "Network protocol analyzer, can capture sensitive data",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "Network", "FileSystem"]
+        },
+        {
+          "name": "Netcat",
+          "processNames": ["nc.exe", "netcat.exe"],
+          "description": "Network utility used for backdoors and data exfiltration",
+          "threatLevel": "High",
+          "detectionMethods": ["Process", "Network", "FileSystem"]
+        },
+        {
+          "name": "Metasploit",
+          "processNames": ["msfconsole.exe", "msfvenom.exe", "msfdb.exe"],
+          "description": "Penetration testing framework, dangerous in wrong hands",
+          "threatLevel": "High",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        },
+        {
+          "name": "Cain & Abel",
+          "processNames": ["cain.exe", "abel.exe"],
+          "description": "Password recovery tool, can crack network passwords",
+          "threatLevel": "High",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        }
+      ]
+    },
+    "passwordTools": {
+      "category": "Password Cracking & Recovery",
+      "description": "Tools designed to recover or crack passwords",
+      "applications": [
+        {
+          "name": "John the Ripper",
+          "processNames": ["john.exe", "john.exe.bak"],
+          "description": "Password cracking tool",
+          "threatLevel": "High",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        },
+        {
+          "name": "Hashcat",
+          "processNames": ["hashcat.exe", "hashcat64.exe"],
+          "description": "Advanced password recovery tool",
+          "threatLevel": "High",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        },
+        {
+          "name": "Ophcrack",
+          "processNames": ["ophcrack.exe", "ophcrack-cli.exe"],
+          "description": "Windows password cracker",
+          "threatLevel": "High",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        },
+        {
+          "name": "L0phtCrack",
+          "processNames": ["lc5.exe", "lc.exe"],
+          "description": "Windows password auditing tool",
+          "threatLevel": "High",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        }
+      ]
+    },
+    "systemTools": {
+      "category": "System Manipulation Tools",
+      "description": "Tools that can modify system behavior and bypass security",
+      "applications": [
+        {
+          "name": "Process Hacker",
+          "processNames": ["ProcessHacker.exe", "ProcessHacker64.exe"],
+          "description": "Advanced process viewer that can terminate system processes",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        },
+        {
+          "name": "Process Explorer",
+          "processNames": ["procexp.exe", "procexp64.exe"],
+          "description": "Microsoft Sysinternals tool for process analysis",
+          "threatLevel": "Low",
+          "detectionMethods": ["Process", "FileSystem"]
+        },
+        {
+          "name": "Autoruns",
+          "processNames": ["autoruns.exe", "autoruns64.exe"],
+          "description": "Shows startup programs, can be used to hide malware",
+          "threatLevel": "Low",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        },
+        {
+          "name": "Regedit",
+          "processNames": ["regedit.exe"],
+          "description": "Registry editor, can modify system settings",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "Registry"]
+        },
+        {
+          "name": "Gpedit.msc",
+          "processNames": ["gpedit.msc"],
+          "description": "Group Policy editor, can disable security features",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "Registry"]
+        }
+      ]
+    },
+    "fileTools": {
+      "category": "File Manipulation & Data Exfiltration",
+      "description": "Tools used to manipulate files and extract data",
+      "applications": [
+        {
+          "name": "7-Zip",
+          "processNames": ["7z.exe", "7zFM.exe", "7zG.exe"],
+          "description": "Compression tool, can be used to hide malicious files",
+          "threatLevel": "Low",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        },
+        {
+          "name": "WinRAR",
+          "processNames": ["WinRAR.exe", "Rar.exe", "UnRAR.exe"],
+          "description": "Archive tool, potential for hiding malware",
+          "threatLevel": "Low",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        },
+        {
+          "name": "FileZilla",
+          "processNames": ["filezilla.exe", "filezilla-server.exe"],
+          "description": "FTP client, can be used for data exfiltration",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "Network", "FileSystem"]
+        },
+        {
+          "name": "PuTTY",
+          "processNames": ["putty.exe", "pscp.exe", "psftp.exe"],
+          "description": "SSH client, can be used for unauthorized access",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "Network", "FileSystem"]
+        }
+      ]
+    },
+    "monitoringTools": {
+      "category": "System Monitoring & Keyloggers",
+      "description": "Tools that can monitor user activity and capture sensitive information",
+      "applications": [
+        {
+          "name": "Keylogger Tools",
+          "processNames": ["keylogger.exe", "kl.exe", "logger.exe"],
+          "description": "Various keylogging applications",
+          "threatLevel": "Critical",
+          "detectionMethods": ["Process", "FileSystem", "Registry", "Network"]
+        },
+        {
+          "name": "Spy Software",
+          "processNames": ["spy.exe", "monitor.exe", "track.exe"],
+          "description": "General monitoring and spying tools",
+          "threatLevel": "Critical",
+          "detectionMethods": ["Process", "FileSystem", "Registry", "Network"]
+        },
+        {
+          "name": "Screen Capture Tools",
+          "processNames": ["screenshot.exe", "capture.exe", "grab.exe"],
+          "description": "Tools that can capture screen content",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        }
+      ]
+    },
+    "malwareTools": {
+      "category": "Malware Development & Analysis",
+      "description": "Tools used to create, analyze, or distribute malware",
+      "applications": [
+        {
+          "name": "PE Explorer",
+          "processNames": ["peexplorer.exe"],
+          "description": "Portable Executable file analyzer",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        },
+        {
+          "name": "Resource Hacker",
+          "processNames": ["reshacker.exe"],
+          "description": "Resource editor for Windows executables",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        },
+        {
+          "name": "UPX",
+          "processNames": ["upx.exe"],
+          "description": "Executable packer, can hide malicious code",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        },
+        {
+          "name": "OllyDbg",
+          "processNames": ["ollydbg.exe"],
+          "description": "Debugger, can analyze and modify programs",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        },
+        {
+          "name": "IDA Pro",
+          "processNames": ["ida.exe", "ida64.exe"],
+          "description": "Disassembler and debugger",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        }
+      ]
+    },
+    "networkAttackTools": {
+      "category": "Network Attack & Exploitation",
+      "description": "Tools specifically designed for network attacks",
+      "applications": [
+        {
+          "name": "Aircrack-ng",
+          "processNames": ["aircrack-ng.exe", "aireplay-ng.exe"],
+          "description": "WiFi security auditing tools",
+          "threatLevel": "High",
+          "detectionMethods": ["Process", "Network", "FileSystem"]
+        },
+        {
+          "name": "Wifite",
+          "processNames": ["wifite.exe"],
+          "description": "Automated WiFi attack tool",
+          "threatLevel": "High",
+          "detectionMethods": ["Process", "Network", "FileSystem"]
+        },
+        {
+          "name": "Kali Linux Tools",
+          "processNames": ["kali.exe", "backtrack.exe"],
+          "description": "Various penetration testing tools",
+          "threatLevel": "High",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        },
+        {
+          "name": "Social Engineering Toolkit",
+          "processNames": ["setoolkit.exe", "se-toolkit.exe"],
+          "description": "Social engineering attack framework",
+          "threatLevel": "High",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        }
+      ]
+    },
+    "cryptocurrencyTools": {
+      "category": "Cryptocurrency Mining & Wallet Tools",
+      "description": "Tools related to cryptocurrency that can be malicious",
+      "applications": [
+        {
+          "name": "Crypto Miners",
+          "processNames": ["miner.exe", "xmrig.exe", "ccminer.exe", "ethminer.exe"],
+          "description": "Cryptocurrency mining software, often hidden",
+          "threatLevel": "Medium",
+          "detreatLevel": "Medium",
+          "detectionMethods": ["Process", "CPU", "Network", "FileSystem"]
+        },
+        {
+          "name": "Wallet Tools",
+          "processNames": ["wallet.exe", "bitcoin.exe", "ethereum.exe"],
+          "description": "Cryptocurrency wallet applications",
+          "threatLevel": "Low",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        }
+      ]
+    },
+    "legitimateButRisky": {
+      "category": "Legitimate Tools with High Risk Potential",
+      "description": "Tools that are legitimate but commonly abused",
+      "applications": [
+        {
+          "name": "PowerShell",
+          "processNames": ["powershell.exe", "powershell_ise.exe"],
+          "description": "Windows scripting tool, heavily abused by attackers",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "CommandLine", "Registry"]
+        },
+        {
+          "name": "Command Prompt",
+          "processNames": ["cmd.exe", "conhost.exe"],
+          "description": "Command line interface, used for malicious commands",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "CommandLine", "Registry"]
+        },
+        {
+          "name": "Windows Script Host",
+          "processNames": ["wscript.exe", "cscript.exe"],
+          "description": "Script execution engines, can run malicious scripts",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "FileSystem", "Registry"]
+        },
+        {
+          "name": "Task Scheduler",
+          "processNames": ["schtasks.exe", "taskeng.exe"],
+          "description": "Can be used to schedule malicious tasks",
+          "threatLevel": "Medium",
+          "detectionMethods": ["Process", "Registry", "Services"]
+        }
+      ]
+    }
+  },
+  "detectionRules": {
+    "processMonitoring": {
+      "enabled": true,
+      "checkInterval": 30,
+      "alertThreshold": 1
+    },
+    "fileSystemMonitoring": {
+      "enabled": true,
+      "checkInterval": 60,
+      "alertThreshold": 1
+    },
+    "registryMonitoring": {
+      "enabled": true,
+      "checkInterval": 120,
+      "alertThreshold": 1
+    },
+    "networkMonitoring": {
+      "enabled": true,
+      "checkInterval": 15,
+      "alertThreshold": 1
+    }
+  },
+  "riskScoring": {
+    "Critical": 100,
+    "High": 75,
+    "Medium": 50,
+    "Low": 25
+  },
+  "lastUpdated": "2024-01-01T00:00:00Z",
+  "version": "1.0.0"
+}
+
